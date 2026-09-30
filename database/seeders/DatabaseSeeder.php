@@ -21,24 +21,27 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
         ]);
 
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@example.com']
-        );
+        $roleId = \App\Models\Role::where('slug', 'admin')->value('id');
 
-        if (!$admin->wasRecentlyCreated) {
-            return;
+        $admin = User::where('email', 'admin@example.com')->first();
+
+        if (!$admin) {
+            $password = Str::random(16);
+
+            $admin = User::create([
+                'name' => 'Admin',
+                'email' => 'admin@example.com',
+                'password' => $password,
+                'role_id' => $roleId,
+            ]);
+
+            if (app()->runningInConsole()) {
+                $this->command?->info("Admin account created: admin@example.com / {$password}");
+            }
         }
 
-        $password = Str::random(16);
-
-        $admin->update([
-            'name' => 'Admin',
-            'password' => $password,
-            'role_id' => \App\Models\Role::where('slug', 'admin')->value('id'),
-        ]);
-
-        if (app()->runningInConsole()) {
-            $this->command?->info("Admin account created: admin@example.com / {$password}");
+        if ($admin->role_id !== $roleId) {
+            $admin->update(['role_id' => $roleId]);
         }
     }
 }

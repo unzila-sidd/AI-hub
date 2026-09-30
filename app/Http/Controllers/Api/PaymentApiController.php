@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Payment;
-use App\Models\Sale;
 use App\Services\SyncService;
 use Illuminate\Http\Request;
 
-class PaymentController extends Controller
+class PaymentApiController extends Controller
 {
     public function __construct(private SyncService $sync)
     {
@@ -20,58 +20,36 @@ class PaymentController extends Controller
         $payments = Payment::query()
             ->with(['sale:id,invoice_no,customer_name,total', 'user:id,name'])
             ->when($request->method, fn ($q, $m) => $q->where('method', $m))
-            ->when($request->search, fn ($q, $s) => $q->whereHas('sale', fn ($sq) => $sq->where('invoice_no', 'like', "%{$s}%")->orWhere('customer_name', 'like', "%{$s}%")))
+            ->when($request->search, fn ($q, $s) => $q->whereHas('sale',
+                fn ($sq) => $sq->where('invoice_no', 'like', "%{$s}%")->orWhere('customer_name', 'like', "%{$s}%")))
             ->latest()
-            ->paginate(20)
-            ->withQueryString();
+            ->paginate($request->integer('per_page', 15));
 
-        return view('pos.payments.index', compact('payments'));
-    }
-
-    public function create()
-    {
-        abort_unless(auth()->user()->hasPermission('payments.add'), 403);
-
-        $sales = Sale::latest('created_at')->get(['id', 'invoice_no', 'customer_name', 'total']);
-
-        return view('pos.payments.create', compact('sales'));
+        return response()->json($payments);
     }
 
     public function store(Request $request)
     {
         abort_unless(auth()->user()->hasPermission('payments.add'), 403);
 
-        $data = $this->validated($request);
-
-        $payment = Payment::create($data + ['user_id' => auth()->id()]);
+        $payment = Payment::create($this->validated($request) + ['user_id' => auth()->id()]);
 
         $payment->sale->refreshPaymentStatus();
         $this->sync->record('payment', $payment->id, 'created', $payment->fresh()->load('sale')->toArray());
 
-        return redirect()->route('pos.payments.index')->with('success', 'Payment recorded.');
-    }
-
-    public function edit(Payment $payment)
-    {
-        abort_unless(auth()->user()->hasPermission('payments.edit'), 403);
-
-        $sales = Sale::latest('created_at')->get(['id', 'invoice_no', 'customer_name', 'total']);
-
-        return view('pos.payments.edit', compact('payment', 'sales'));
+        return response()->json(['data' => $payment->fresh()->load('sale')], 201);
     }
 
     public function update(Request $request, Payment $payment)
     {
         abort_unless(auth()->user()->hasPermission('payments.edit'), 403);
 
-        $data = $this->validated($request);
-
-        $payment->update($data);
+        $payment->update($this->validated($request));
 
         $payment->sale->refreshPaymentStatus();
         $this->sync->record('payment', $payment->id, 'updated', $payment->fresh()->load('sale')->toArray());
 
-        return redirect()->route('pos.payments.index')->with('success', 'Payment updated.');
+        return response()->json(['data' => $payment->fresh()->load('sale')]);
     }
 
     public function destroy(Payment $payment)
@@ -84,7 +62,7 @@ class PaymentController extends Controller
         $payment->delete();
         $sale->refreshPaymentStatus();
 
-        return back()->with('success', 'Payment deleted.');
+        return response()->json(null, 204);
     }
 
     private function validated(Request $request): array

@@ -82,7 +82,7 @@ class RolesAndPermissionsSeeder extends Seeder
         foreach ($roles as $roleData) {
             $role = Role::firstOrCreate(
                 ['slug' => $roleData['slug']],
-                $roleData
+                collect($roleData)->except('permissions')->all()
             );
             $role->permissions()->sync($roleData['permissions']);
         }

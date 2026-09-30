@@ -48,4 +48,13 @@ class Sale extends Model
     {
         return 'INV-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
     }
+
+    public function refreshPaymentStatus(): void
+    {
+        $paid = (float) $this->payments()->sum('amount');
+
+        $this->update([
+            'payment_status' => $paid >= $this->total ? 'paid' : 'unpaid',
+        ]);
+    }
 }
