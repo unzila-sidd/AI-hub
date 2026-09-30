@@ -50,7 +50,8 @@ An AI productivity chat application built with Laravel 12, with an integrated Po
    docker compose exec app php artisan migrate --seed
    ```
 
-   This creates the roles (`admin`, `manager`, `cashier`), their permissions (payments are split into Add / Edit / Delete), sample products, and a login `admin@example.com` / `password`.
+   This creates the roles (`admin`, `manager`, `cashier`), their permissions (payments are split into Add / Edit / Delete), sample products, and an admin account `admin@example.com` — the seeder prints a randomly generated password.
+   Default login for a freshly seeded DB is `admin@example.com` / the password shown in the `db:seed` output (never `password`).
 
 4. Build front-end assets:
 
@@ -63,7 +64,6 @@ An AI productivity chat application built with Laravel 12, with an integrated Po
 
 ## Offline sync setup
 
-- Default login is admin@example.com / password (first run).
 - Set `SYNC_REMOTE_URL` to the endpoint of your central server that should receive the queued events, and `SYNC_TOKEN` to a shared bearer token.
 - The remote endpoint should accept a POST with `{ entity, entity_id, action, payload }` and return 2xx to confirm receipt.
 - Offline, the app runs fully on the local database. Queued items are pushed automatically every 5 minutes once online, or manually with:

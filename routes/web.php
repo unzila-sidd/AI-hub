@@ -29,15 +29,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/chat/{id}', [ChatController::class,'load'])->name('chat.load');
 
     // POS
-    Route::prefix('pos')->group(function () {
+    Route::prefix('pos')->middleware('throttle:30,1')->group(function () {
         Route::get('/', [PosController::class, 'index'])->name('pos.index');
-        Route::post('/checkout', [PosController::class, 'store'])->name('pos.store');
+        Route::post('/checkout', [PosController::class, 'store'])->name('pos.store')->middleware('throttle:10,1');
         Route::get('/sales', [PosController::class, 'sales'])->name('pos.sales');
         Route::get('/receipt/{sale}', [PosController::class, 'receipt'])->name('pos.receipt');
     });
 
     // Admin / management
-    Route::prefix('admin')->name('pos.')->group(function () {
+    Route::prefix('admin')->name('pos.')->middleware('throttle:60,1')->group(function () {
         Route::resource('products', ProductController::class);
         Route::resource('payments', PaymentController::class)->except(['show']);
         Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
