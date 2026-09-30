@@ -41,4 +41,9 @@ return [
 
 ],
 
+    'sync' => [
+        'url' => env('SYNC_REMOTE_URL'),
+        'token' => env('SYNC_TOKEN'),
+    ],
+
 ];

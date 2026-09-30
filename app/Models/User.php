@@ -22,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role_id',
     ];
 
     /**
@@ -50,4 +51,51 @@ class User extends Authenticatable
 {
     return $this->hasMany(Conversation::class);
 }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function hasRole(string $slug): bool
+    {
+        return $this->role?->slug === $slug;
+    }
+
+    public function hasAnyRole(array $slugs): bool
+    {
+        return in_array($this->role?->slug, $slugs, true);
+    }
+
+    public function hasPermission(string $slug): bool
+    {
+        if (!$this->role) {
+            return false;
+        }
+
+        if ($this->hasRole('admin')) {
+            return true;
+        }
+
+        return $this->role
+            ->permissions()
+            ->where('slug', $slug)
+            ->exists();
+    }
+
+    public function hasAnyPermission(array $slugs): bool
+    {
+        foreach ($slugs as $slug) {
+            if ($this->hasPermission($slug)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function sales()
+    {
+        return $this->hasMany(Sale::class, 'cashier_id');
+    }
 }
