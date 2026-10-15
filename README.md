@@ -8,7 +8,13 @@ An **AI productivity chat app** built with Laravel 12, with an integrated **Poin
 
 ## 1. Features
 
+### Dashboard hub
+- Central dashboard at `/dashboard` linking to every module (AI Chat, POS, Products, Sales, Payments, Reports, Roles, Users)
+- Live stat cards (sales today, revenue today, products, low-stock alerts)
+- Tiles are permission-aware: each user only sees the modules their role allows
+
 ### AI Chat
+- Modern **Bootstrap 5** login / register / password-reset screens (gradient design, icon inputs, show/hide password)
 - Register / login, conversation history sidebar, chat with OpenAI (`gpt-4o-mini`), voice reply playback.
 
 ### POS
@@ -72,6 +78,7 @@ docker compose up -d
 ```
 
 The app is then at http://localhost:8003 — open:
+- **Dashboard hub** (everything in one place): http://localhost:8003/dashboard
 - AI chat: http://localhost:8003/chat
 - POS terminal: http://localhost:8003/pos
 - Reports / products / payments / roles / users: the AdminLTE sidebar in the app
